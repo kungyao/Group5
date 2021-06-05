@@ -215,7 +215,7 @@ public:
     }
 
     /** @brief Run socketSession after initial.*/
-    void runAsync(boost::beast::http::request<boost::beast::http::string_body> req) {
+    void runAsync(/*boost::beast::http::request<boost::beast::http::string_body> req*/) {
         handshake();
         //ws_.async_accept(
         //    req,

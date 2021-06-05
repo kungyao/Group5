@@ -18,22 +18,42 @@
 #include "HttpUtility.h"
 class SocketSession;
 
+
+// "\r\n"
+typedef boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type> iterator;
+std::pair<iterator, bool> match_end(iterator begin, iterator end) {
+    int index = 0;
+    const std::string match = "\r\n\r\n";
+    iterator i = begin;
+    while (i != end) {
+        if (*i == match[index]) 
+            index++;
+        else
+            index = 0;
+        if (index == 4)
+            return std::make_pair(i, true);
+        i++;
+    }
+    return std::make_pair(i, false);
+}
+
 /** @brief Handle the incoming http request. */
 class HttpSession : public std::enable_shared_from_this<HttpSession> {
 private:
     /** @brief socket fd.*/
-    //boost::asio::ip::tcp::socket socket_;
+    boost::asio::ip::tcp::socket socket_;
     //std::string buffer_;
     HttpRequest request;
     std::string response;
 
     boost::asio::streambuf buffer_;
-    boost::beast::tcp_stream stream_;
-    boost::beast::http::request<boost::beast::http::string_body> parser_;
+    //boost::beast::tcp_stream stream_;
+    //boost::beast::http::request<boost::beast::http::string_body> parser_;
 
     void makeSocketSession() {
         std::make_shared<SocketSession>(
-            std::move(stream_.release_socket()), request)->runAsync(parser_);
+            std::move(socket_), request)->runAsync();
+            //std::move(stream_.release_socket()), request)->runAsync(parser_);
     }
     void handleFail(boost::system::error_code ec, char const* what) {
         if (ec == boost::asio::error::operation_aborted)
@@ -103,19 +123,21 @@ private:
             return;
         }
 
-        boost::ignore_unused(bytes);
-
         // convert parser data to string data.
-        std::stringstream ss;
-        ss << parser_;
-        std::string buffer = ss.str();
+        //std::stringstream ss;
+        //ss << parser_;
+        //std::string buffer = ss.str();
+
+        std::string buffer((std::istreambuf_iterator<char>(&buffer_)), std::istreambuf_iterator<char>());
+        //std::string buffer(boost::asio::buffers_begin(buffer_), boost::asio::buffers_end(buffer_));
+        std::cout << buffer << std::endl;
         handleRequest(buffer);
 
         if (request.Connection.find("Upgrade") == std::string::npos) {
             std::cout << "httpºu°Õ\n";
             response = handleResponse(request);
             boost::asio::async_write(
-                stream_,
+                socket_,
                 boost::asio::buffer(response),
                 std::bind(
                     &HttpSession::sendMessage,
@@ -124,6 +146,16 @@ private:
                     std::placeholders::_2
                 )
             );
+            //boost::asio::async_write(
+            //    stream_,
+            //    boost::asio::buffer(response),
+            //    std::bind(
+            //        &HttpSession::sendMessage,
+            //        shared_from_this(),
+            //        std::placeholders::_1,
+            //        std::placeholders::_2
+            //    )
+            //);
         }
         else if (request.Connection.find("Upgrade") != std::string::npos && request.Upgrade.find("websocket") != std::string::npos) {
             makeSocketSession();
@@ -143,46 +175,48 @@ private:
     }
 public:
     explicit HttpSession(boost::asio::ip::tcp::socket&& socket)
-        : /*socket_(std::move(socket)),*/ stream_(std::move(socket)) {}
+        : socket_(std::move(socket))/*, stream_(std::move(socket))*/ {}
     HttpSession(const HttpSession&) = delete;
     HttpSession& operator=(const HttpSession&) = delete;
 
     /** @brief Run HttpSession after initial.*/
     void runAsync() {
         //buffer_ = "";
-        //boost::asio::async_read_until(
-        //    socket_,
-        //    boost::asio::dynamic_buffer(buffer_),
-        //    //boost::asio::transfer_all(), 
-        //    "\r\n",
-        //    std::bind(
-        //        &HttpSession::receiveMessage,
-        //        shared_from_this(),
-        //        std::placeholders::_1,
-        //        std::placeholders::_2
-        //    )
-        //); 
-        buffer_.consume(buffer_.size());
-        boost::beast::http::async_read(
-            stream_,
-            buffer_,
+        //buffer_
+        boost::asio::async_read_until(
+            socket_,
             //boost::asio::dynamic_buffer(buffer_),
-            parser_,
+            buffer_,
+            //boost::asio::transfer_all(), 
+            match_end,
             std::bind(
                 &HttpSession::receiveMessage,
                 shared_from_this(),
                 std::placeholders::_1,
                 std::placeholders::_2
             )
-        );
+        ); 
+        //buffer_.consume(buffer_.size());
+        //boost::beast::http::async_read(
+        //    stream_,
+        //    buffer_,
+        //    //boost::asio::dynamic_buffer(buffer_),
+        //    parser_,
+        //    std::bind(
+        //        &HttpSession::receiveMessage,
+        //        shared_from_this(),
+        //        std::placeholders::_1,
+        //        std::placeholders::_2
+        //    )
+        //);
     }
 
     /** @brief Close HttpSession.*/
     void close(boost::system::error_code ec) {
         // This means we should close the connection, usually because
         // the response indicated the "Connection: close" semantic.
-        //socket_.close();
-        stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+        socket_.close();
+        //stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
     }
 };
 
