@@ -8,13 +8,14 @@ option(Boost_USE_MULTITHREAD "Use multithread" ON)
 option(Boost_USE_STATIC_RUNTIME "Use static runtime" ON)
 option(Boost_USE_DEBUG_RUNTIME "Use debug runtime" ON)
 
-# find boost library     date_time   COMPONENTS system thread regex
+# find boost library
 find_package(Boost REQUIRED date_time)
 IF(Boost_FOUND)
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
     LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
 ENDIF(Boost_FOUND)
 
+# find openssl library
 find_package(OpenSSL)
 if (OPENSSL_FOUND)
     link_libraries(${OPENSSL_LIBRARIES})
