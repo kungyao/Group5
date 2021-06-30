@@ -9,3 +9,7 @@ int main() {
 	server.run();
 	return 0;
 }
+
+//#include <gtest/gtest.h>
+//
+//TEST(GoogleTest, Install) { ASSERT_TRUE(true); }

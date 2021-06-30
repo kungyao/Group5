@@ -18,23 +18,24 @@
 #include "HttpUtility.h"
 class SocketSession;
 
-
-// "\r\n"
-typedef boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type> iterator;
-std::pair<iterator, bool> match_end(iterator begin, iterator end) {
-    int index = 0;
-    const std::string match = "\r\n\r\n";
-    iterator i = begin;
-    while (i != end) {
-        if (*i == match[index]) 
-            index++;
-        else
-            index = 0;
-        if (index == 4)
-            return std::make_pair(i, true);
-        i++;
+namespace {
+    // "\r\n"
+    typedef boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type> iterator;
+    std::pair<iterator, bool> match_end(iterator begin, iterator end) {
+        int index = 0;
+        const std::string match = "\r\n\r\n";
+        iterator i = begin;
+        while (i != end) {
+            if (*i == match[index])
+                index++;
+            else
+                index = 0;
+            if (index == 4)
+                return std::make_pair(i, true);
+            i++;
+        }
+        return std::make_pair(i, false);
     }
-    return std::make_pair(i, false);
 }
 
 /** @brief Handle the incoming http request. */
