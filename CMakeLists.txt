@@ -8,8 +8,8 @@ option(Boost_USE_MULTITHREAD "Use multithread" ON)
 option(Boost_USE_STATIC_RUNTIME "Use static runtime" ON)
 option(Boost_USE_DEBUG_RUNTIME "Use debug runtime" ON)
 
-# find boost library     date_time 
-find_package(Boost REQUIRED COMPONENTS system thread regex)
+# find boost library     date_time   COMPONENTS system thread regex
+find_package(Boost REQUIRED date_time)
 IF(Boost_FOUND)
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
     LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
@@ -26,7 +26,14 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wpedantic -Wno-unused-parameter")
+    # for using thread
+    set(CMAKE_THREAD_LIBS_INIT "-lpthread")
+    set(CMAKE_HAVE_THREADS_LIBRARY 1)
+    set(CMAKE_USE_WIN32_THREADS_INIT 0)
+    set(CMAKE_USE_PTHREADS_INIT 1)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pthread -Wall -Wextra -Wpedantic -Wno-unused-parameter")
 endif()
 
+enable_testing ()
 add_subdirectory (src)
