@@ -227,7 +227,7 @@ public:
         //);
     }
 
-    void closeHandler(boost::system::error_code& ec) {
+    void closeHandler(boost::system::error_code ec) {
         std::cout << "Close Socket  " << ec << "\n";
     }
 
