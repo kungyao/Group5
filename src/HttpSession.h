@@ -134,7 +134,7 @@ private:
         handleRequest(buffer);
 
         if (request.Connection.find("Upgrade") == std::string::npos) {
-            std::cout << "httpºu°Õ\n";
+            std::cout << "httpï¿½uï¿½ï¿½\n";
             response = handleResponse(request);
             boost::asio::async_write(
                 socket_,
